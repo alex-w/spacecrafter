@@ -141,7 +141,7 @@ void UI::init(const InitParser& conf)
 
 	double lati = coreLink->observatoryGetLatitude();
 	double longi = coreLink->observatoryGetLongitude();
-	double alti = coreLink->observatoryGetAltitude()/1000000.0;
+	double alti = coreLink->observatoryGetAltitude(); // /1000000.0;
 	coreLink->observerMoveTo(lati,longi,alti,0);
 
 	media->imageDropAll();
