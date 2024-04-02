@@ -274,9 +274,14 @@ bool VideoPlayer::getNextFrame()
 void VideoPlayer::getNextVideoFrame()
 {
 	if (getNextFrame()) {
-		sws_scale(img_convert_ctx, pFrameIn->data, pFrameIn->linesize, 0, pCodecCtx->height, pFrameOut->data, pFrameOut->linesize);
 		for (int i = 0; i < 3; i++) {
-			memcpy(pImageBuffer[i][frameCached % MAX_CACHED_FRAMES], pFrameOut->data[i], widths[i] * heights[i]);
+			char *dst = reinterpret_cast<char*>(pImageBuffer[i][frameCached % MAX_CACHED_FRAMES]);
+			char *src = reinterpret_cast<char*>(pFrameIn->data[i]);
+			for (int j = 0; j < heights[i]; ++j) {
+				memcpy(dst, src, widths[i]);
+				src += pFrameIn->linesize[i];
+				dst += widths[i];
+			}
 		}
 		++frameCached;
 	}
