@@ -44,6 +44,7 @@
 class Projector;
 class Navigator;
 class Subtitle;
+class InitParser;
 
 enum class AudioFunction : char {
 	AF_MUSICLOAD,
@@ -87,7 +88,7 @@ enum class V_STATE: char { V_NONE, V_PAUSE, V_PLAY };
 class Media : public NoCopy {
 
 public:
-	Media();
+	Media(InitParser &conf);
 	~Media();
 
 	////////////////////////////////////////////////////////////////////////////

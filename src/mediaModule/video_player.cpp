@@ -28,13 +28,27 @@
 #include "tools/context.hpp"
 #include "EntityCore/EntityCore.hpp"
 
-VideoPlayer::VideoPlayer(Media* _media)
+VideoPlayer::VideoPlayer(Media* _media, InitParser &conf)
 {
 	media = _media;
 	m_isVideoPlayed = false;
 	m_isVideoInPause = false;
 	m_isVideoSeeking = false;
 	img_convert_ctx = NULL;
+	std::string videoPlayerCodecThreadConfig = conf.getStr(SCS_IO, SCK_VIDEO_CODEC_THREADS);
+	if (videoPlayerCodecThreadConfig.empty()) {
+		cLog::get()->write("Videoplayer: missing '" SCK_VIDEO_CODEC_THREADS "' value, expected number or percentage of threads to use. Default to 50%", LOG_TYPE::L_WARNING);
+		codecDecodeThreads = std::thread::hardware_concurrency() / 2;
+	} else {
+		try {
+			codecDecodeThreads = std::stoi(videoPlayerCodecThreadConfig);
+			if (videoPlayerCodecThreadConfig.back() == '%')
+				codecDecodeThreads = codecDecodeThreads * std::thread::hardware_concurrency() / 100;
+		} catch (...) {
+			cLog::get()->write("Videoplayer: invalid '" SCK_VIDEO_CODEC_THREADS "' value '" + videoPlayerCodecThreadConfig + "', expected number or percentage of threads to use. Default to 50%", LOG_TYPE::L_WARNING);
+			codecDecodeThreads = std::thread::hardware_concurrency() / 2;
+		}
+	}
 }
 
 
@@ -102,7 +116,7 @@ bool VideoPlayer::restartCurrentVideo()
 }
 
 
-bool VideoPlayer::playNewVideo(const std::string& _fileName)
+bool VideoPlayer::playNewVideo(const std::string& _fileName, DecodePolicy policy)
 {
 	if (m_isVideoPlayed)
 		stopCurrentVideo(true);
@@ -145,7 +159,15 @@ bool VideoPlayer::playNewVideo(const std::string& _fileName)
 
 	pCodecCtx= avcodec_alloc_context3(NULL);
 	avcodec_parameters_to_context(pCodecCtx, pFormatCtx->streams[videoindex]->codecpar);
-
+	if (pCodecCtx->width > 1024) // Only enforce threaded policy for lage videos, as smaller ones doesn't need it.
+		policy = DecodePolicy::THREADED;
+	switch (policy) {
+		case DecodePolicy::THREADED:
+			if (codecDecodeThreads)
+				pCodecCtx->thread_count = codecDecodeThreads;
+			break;
+		case DecodePolicy::ASYNC:;
+	}
 	pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
 	if(pCodec==NULL) {
 		cLog::get()->write("Unsupported pCodec for video file", LOG_TYPE::L_ERROR);

@@ -43,6 +43,7 @@ class s_texture;
 class Media;
 class SyncEvent;
 class BufferMgr;
+class InitParser;
 
 // Maximal number of frames to load in advance (no longer need to be a power-of-two)
 #define MAX_CACHED_FRAMES 40
@@ -52,6 +53,11 @@ class BufferMgr;
 #define MAX_CACHE_SPEEDUP 1
 // Speed factor determining how fast we resync the video with the audio. Higher is faster, lower is smoother unless cache is empty.
 #define VIDEO_BOOST_FACTOR 1.0
+
+enum class DecodePolicy {
+	ASYNC, // Asynchronously decode using a single thread
+	THREADED, // Require the codec context to use multiple threads
+};
 
 /**
  * \class VideoPlayer
@@ -70,7 +76,7 @@ class VideoPlayer {
 public:
 	//! \fn VideoPlayer
 	//! \brief Constructor: initializes the states of the ffmpeg
-	VideoPlayer(Media* _media);
+	VideoPlayer(Media* _media, InitParser &conf);
 
 	//! Destructor, closes the states of the ffmpeg
 	~VideoPlayer();
@@ -82,7 +88,7 @@ public:
 	void update();
 
 	//! initializes the ffmpeg with the name of the file passed in argument
-	bool playNewVideo(const std::string& fileName);
+	bool playNewVideo(const std::string& fileName, DecodePolicy policy = DecodePolicy::ASYNC);
 
 	//! ends the playback of a video in progress
 	void stopCurrentVideo(bool newVideo);
@@ -186,6 +192,7 @@ private:
 
 	std::atomic<uint32_t> frameUsed = 0; // Index of the last rendered frame
 	int frameIdxSwap = 0;
+	uint8_t codecDecodeThreads = 0;
 	bool firstUse = true; // Tell if this texture is new and uninitialized yet
 	void mainloop();
 	// Stop video thread and drop every pending frames

@@ -66,6 +66,7 @@
 #define SCK_MKFIFO_BUFFER_IN_SIZE           "mkfifo_buffer_in_size"
 #define SCK_MPLAYER_MKFIFO_NAME             "mplayer_mkfifo_name"
 #define SCK_FLAG_MASTERPUT                  "flag_masterput"
+#define SCK_VIDEO_CODEC_THREADS             "video_codec_threads"
 
 #define SCK_AUTOSCREEN                      "autoscreen"
 #define SCK_FULLSCREEN                      "fullscreen"

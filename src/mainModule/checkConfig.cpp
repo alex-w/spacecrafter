@@ -72,6 +72,7 @@ void CheckConfig::checkIoSettings()
 	tmpSettings[SCK_MKFIFO_FILE_IN]="/tmp/spacecrafter.fifo";
 	tmpSettings[SCK_MKFIFO_BUFFER_IN_SIZE]="256";
 	tmpSettings[SCK_FLAG_MASTERPUT]="false";
+	tmpSettings[SCK_VIDEO_CODEC_THREADS]="50%";
 	// ioSettings["mplayer_name"]="/usr/bin/mplayer";
 	// ioSettings["mplayer_mkfifo_name"]="/tmp/mplayer_mkfifo_name.fifo";
 

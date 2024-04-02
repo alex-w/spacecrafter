@@ -128,7 +128,7 @@ App::App( SDLFacade* const sdl )
 	s_texture::setLoadingStrategy(conf.getStr(SCS_MAIN, SCK_TEXTURE_LOADING));
 	fontFactory = std::make_unique<FontFactory>();
 
-	media = std::make_shared<Media>();
+	media = std::make_shared<Media>(conf);
 	saveScreenInterface = std::make_shared<SaveScreenInterface>(VulkanMgr::instance->getScreenRect(), (sender) ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	saveScreenInterface->setVideoBaseName(settings->getVframeDirectory() + APP_LOWER_NAME);
 	saveScreenInterface->setSnapBaseName(settings->getScreenshotDirectory() + APP_LOWER_NAME);

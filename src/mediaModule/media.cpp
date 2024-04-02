@@ -31,11 +31,11 @@
 
 #define STEP_VOLUME 5
 
-Media::Media()
+Media::Media(InitParser &conf)
 {
 	audio = std::make_unique<Audio>();
 	imageMgr = std::make_unique<ImageMgr>();
-	player = std::make_unique<VideoPlayer>(this);
+	player = std::make_unique<VideoPlayer>(this, conf);
 	viewPort = std::make_unique<ViewPort>();
 	vr360 = std::make_unique<VR360>();
 	textMgr = std::make_unique<TextMgr>();
