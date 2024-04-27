@@ -569,10 +569,10 @@ void Image::drawViewport(const Navigator * nav, const Projector * prj)
 	}
 	PipelineLayout *layout;
 	if (imageTexture->isYUV()) {
-		setPipeline(m_pipelineUnified[transparency ? 3 : 2]);
+		setPipeline(m_pipelineViewport[transparency ? 3 : 2]);
 		layout = m_layoutUnifiedYUV;
 	} else {
-		setPipeline(m_pipelineUnified[transparency ? 1 : 0]);
+		setPipeline(m_pipelineViewport[transparency ? 1 : 0]);
 		layout = m_layoutUnifiedRGB;
 	}
 	imageTexture->bindSet(cmd, layout);
