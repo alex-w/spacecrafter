@@ -2398,7 +2398,7 @@ int AppCommandInterface::commandAudio()
 			media->audioMusicResume();
 			return executeCommandStatus();
 		} else if (argAction==W_PLAY){
-			std::string argFileName = args[W_FILENAME];
+			std::string argFileName = evalString(args[W_FILENAME]);
 			if (!argFileName.empty() ) {
 				if (FilePath myFile  = FilePath(argFileName, FilePath::TFP::AUDIO)) {
 					media->audioMusicLoad(myFile, Utility::isTrue(args[W_LOOP]));
