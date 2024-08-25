@@ -843,6 +843,7 @@ bool Core::selectObject(const std::string &type, const std::string &id)
 	} else {
 		std::cerr << "Invalid selection type specified: " << type << std::endl;
 		std::cout << "Invalid selection type specified: " << type << std::endl;
+		unSelect();
 		return 0;
 	}
 

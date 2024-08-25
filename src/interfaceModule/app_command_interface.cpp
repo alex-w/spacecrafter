@@ -2576,7 +2576,7 @@ int AppCommandInterface::commandImage()
 int AppCommandInterface::commandSelect()
 {
 	// default is to deselect current object
-	stcore->unSelect();
+	//stcore->unSelect();
 
 	std::string select_type, identifier;
 
