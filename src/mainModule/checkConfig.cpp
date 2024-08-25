@@ -93,6 +93,9 @@ void CheckConfig::checkVideoSettings()
 	//tmpSettings[SCK_BBP_MODE]="24";
 	tmpSettings[SCK_MAXIMUM_FPS]="60";
 	tmpSettings[SCK_REC_VIDEO_FPS]="30";
+	tmpSettings[SCK_AUDIO_FREQUENCY]="44100";
+	tmpSettings[SCK_AUDIO_CHUNKSIZE]="2048";
+	tmpSettings[SCK_AUDIO_CHANNELS]="2";
 
 	sectionSettings.push_back(SCS_VIDEO);
 	insertKeyFromTmpSettings(SCS_VIDEO);

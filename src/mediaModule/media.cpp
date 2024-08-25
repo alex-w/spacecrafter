@@ -33,7 +33,11 @@
 
 Media::Media(InitParser &conf)
 {
-	audio = std::make_unique<Audio>();
+	audio = std::make_unique<Audio>(
+		conf.getDouble(SCS_VIDEO, SCK_AUDIO_FREQUENCY),
+		conf.getDouble(SCS_VIDEO, SCK_AUDIO_CHANNELS),
+		conf.getDouble(SCS_VIDEO, SCK_AUDIO_CHUNKSIZE)
+	);
 	imageMgr = std::make_unique<ImageMgr>();
 	player = std::make_unique<VideoPlayer>(this, conf);
 	viewPort = std::make_unique<ViewPort>();
