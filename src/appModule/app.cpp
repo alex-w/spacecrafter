@@ -728,6 +728,7 @@ void App::draw(int delta_time)
 	if (sender) {
 		sender->acquireFrame(context.frameIdx);
 	} else {
+		context.helper->waitFrame(context.lastFrameIdx);
 		auto res = vkAcquireNextImageKHR(vkmgr.refDevice, vkmgr.getSwapchain(), 20000000, context.semaphores[context.lastFrameIdx], VK_NULL_HANDLE, &context.frameIdx);
 		switch (res) {
 			case VK_SUCCESS:
@@ -743,7 +744,6 @@ void App::draw(int delta_time)
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				return;
 		}
-		context.helper->waitFrame(context.lastFrameIdx);
 		res = vkWaitForFences(vkmgr.refDevice, 1, &context.fences[context.lastFrameIdx], VK_TRUE, WAIT_TIME);
 		if (res != VK_SUCCESS) {
 			switch (res) {
