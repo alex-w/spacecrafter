@@ -311,7 +311,7 @@ void AppCommandInterface::setFlag(FLAG_NAMES flagName, FLAG_VALUES flag_value)
 		// @TODO reconstruct commandline to avoid passing std::string _commandline
 		auto m_flags_ToString_it = m_flags_ToString.find(flagName);
 		if (m_flags_ToString_it != m_flags_ToString.end()) {
-			commandline = "set " + m_flags_ToString_it->second + " " + std::to_string(val);
+			commandline = "flag " + m_flags_ToString_it->second + " " + std::to_string(val);
 		}
 	}
 	executeCommandStatus();
