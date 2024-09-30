@@ -37,7 +37,7 @@ constexpr double icosahedron_b = 0.52573111211913360602566908484788;
 
 //constexpr double icosahedron_a = icosahedron_b*icosahedron_G;
 //0.95 ~ 0.5*sqrt(phi*sqrt(5))
-constexpr double segment = 0.95 * icosahedron_b * 2;
+constexpr double segment = icosahedron_b * 2; // *0.95
 constexpr double PI_MUL_2 = M_PI * 2;
 
 #ifdef __GNUC__
