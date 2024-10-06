@@ -89,6 +89,10 @@ SphereObjL::SphereObjL()
 	indexCountLow = triangles.size() * 3;
 	indexLow = context.indexBufferMgr->acquireBuffer(indexCountLow * sizeof(int));
 	tmp = indexCountLow / 2;
+	for (auto &p : points) {
+		p.pos.normalize();
+		p.normal.normalize();
+	}
 	src = (uint64_t *) triangles.data();
 	dst = (uint64_t *) context.transfer->planCopy(indexLow);
 	while (tmp--)
