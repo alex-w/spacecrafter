@@ -112,6 +112,10 @@ public:
 		return m_isVideoPlayed;
 	}
 
+	bool isVideoCacheFull() const {
+		return (frameCached - frameUsed >= (MAX_CACHED_FRAMES-1)) || !decoding;
+	}
+
 	//! Returns the ID of the YUV textures in the GPU representing the frame read from the video file
 	VideoTexture getYUV_VideoTexture() const {
 		return videoTexture;

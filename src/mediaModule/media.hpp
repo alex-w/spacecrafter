@@ -383,8 +383,12 @@ public:
 
 	void playerInvertflow();
 
-	bool playerIsVideoPlayed() {
+	bool playerIsVideoPlayed() const {
 		return player->isVideoPlayed();
+	}
+
+	bool isVideoCacheFull() const {
+		return player->isVideoCacheFull();
 	}
 
 	void playerRecordUpdate(VkCommandBuffer cmd) {

@@ -1182,6 +1182,8 @@ int AppCommandInterface::commandWait(uint64_t &wait)
 			waitPriority = LoadPriority::BACKGROUND;
 		} else if (level == W_ALL) {
 			waitPriority = LoadPriority::LOADING;
+		} else if (level == W_VIDEO) {
+			waitVideoCache = true;
 		}
 		// We can specify a minimal duration to wait
 		if (args[W_DURATION].empty()) {
