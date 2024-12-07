@@ -94,6 +94,21 @@ AppCommandInterface::~AppCommandInterface()
 	m_set.clear();
 }
 
+bool AppCommandInterface::isInterrupted()
+{
+	if (waitPriority != LoadPriority::DONE) {
+		if (AsyncLoaderMgr::instance->isTaskWithPriority(waitPriority))
+			return true;
+		waitPriority = LoadPriority::DONE;
+	}
+	if (waitVideoCache) {
+		if (media->isVideoCacheFull())
+			return true;
+		waitVideoCache = false;
+	}
+	return false;
+}
+
 void AppCommandInterface::setTcp(ServerSocket* _tcp)
 {
 	tcp=_tcp;

@@ -68,19 +68,7 @@ public:
 
 	void setFlag(FLAG_NAMES flagName, FLAG_VALUES flag_value);
 	void setTcp(ServerSocket* _tcp);
-	inline bool isInterrupted() {
-		if (waitPriority != LoadPriority::DONE) {
-			if (AsyncLoaderMgr::instance->isTaskWithPriority(waitPriority))
-				return true;
-			waitPriority = LoadPriority::DONE;
-		}
-		if (waitVideoCache) {
-			if (media->isVideoCacheFull())
-				return true;
-			waitVideoCache = false;
-		}
-		return false;
-	}
+	bool isInterrupted();
 
 protected:
 	//all different command
