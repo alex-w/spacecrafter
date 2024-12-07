@@ -16,6 +16,7 @@
 #include <fstream>
 #include <SDL2/SDL.h>
 #include <chrono>
+#include <sstream>
 
 //#include "spacecrafter.hpp"
 #include "mediaModule/video_player.hpp"
@@ -242,18 +243,28 @@ void VideoPlayer::update()
 
 bool VideoPlayer::getNextFrame()
 {
+	sTime = std::chrono::steady_clock::now();
 	for (; av_read_frame(pFormatCtx, packet) >= 0; av_packet_unref(packet)) {
 		if(packet->stream_index==videoindex) {
+			auto now = std::chrono::steady_clock::now();
+			sRead += now - sTime;
+			sTime = now;
 			int ret = avcodec_send_packet(pCodecCtx, packet);
 			if(ret < 0) {
 				cLog::get()->write("Decode Error", LOG_TYPE::L_ERROR);
 				continue ;
 			}
+			now = std::chrono::steady_clock::now();
+			sParse += now - sTime;
+			sTime = now;
 			ret = avcodec_receive_frame(pCodecCtx, pFrameIn);
 			if(ret < 0 ) {
 				cLog::get()->write("not got frame", LOG_TYPE::L_DEBUG);
 				continue;
 			}
+			now = std::chrono::steady_clock::now();
+			sDecode += now - sTime;
+			sTime = now;
 			if (m_isVideoSeeking) {
 				if (pFrameIn->key_frame==1) {
 					m_isVideoSeeking=false;
@@ -284,6 +295,7 @@ void VideoPlayer::getNextVideoFrame()
 			}
 		}
 		++frameCached;
+		sWrite += std::chrono::steady_clock::now() - sTime;
 	}
 }
 
@@ -309,6 +321,15 @@ void VideoPlayer::stopCurrentVideo(bool newVideo)
 		EventRecorder::getInstance()->queue(event);
 		media->playerStop(newVideo);
 	}
+	std::ostringstream oss;
+	auto total = (sRead + sParse + sDecode + sWrite).count() / 100ULL;
+	oss << "Video decode statistics : ";
+	oss << "Read " << std::chrono::duration_cast<std::chrono::seconds>(sRead) << "s (" << sRead.count() / total << "%), ";
+	oss << "Parse " << std::chrono::duration_cast<std::chrono::seconds>(sParse) << "s (" << sParse.count() / total << "%), ";
+	oss << "Decode " << std::chrono::duration_cast<std::chrono::seconds>(sDecode) << "s (" << sDecode.count() / total << "%), ";
+	oss << "Copy " << std::chrono::duration_cast<std::chrono::seconds>(sCopy) << "s (" << sWrite.count() / total << "%)";
+	cLog::get()->write(oss.str(), LOG_TYPE::L_INFO);
+	sRead = sParse = sDecode = sWrite = std::chrono::steady_clock::duration{};
 }
 
 void VideoPlayer::initTexture()

@@ -177,6 +177,13 @@ private:
 	double frameRate;
 	std::chrono::steady_clock::duration deltaFrame; // Time between two frames
 
+	//performance query
+	std::chrono::steady_clock::time_point sTime;
+	std::chrono::steady_clock::duration sRead{};
+	std::chrono::steady_clock::duration sParse{};
+	std::chrono::steady_clock::duration sDecode{};
+	std::chrono::steady_clock::duration sWrite{};
+
 	// avoid recalculating each time
 	int widths[3];
 	int heights[3];
