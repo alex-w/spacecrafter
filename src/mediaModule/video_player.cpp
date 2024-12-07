@@ -324,10 +324,10 @@ void VideoPlayer::stopCurrentVideo(bool newVideo)
 	std::ostringstream oss;
 	auto total = (sRead + sParse + sDecode + sWrite).count() / 100ULL;
 	oss << "Video decode statistics : ";
-	oss << "Read " << std::chrono::duration_cast<std::chrono::seconds>(sRead) << "s (" << sRead.count() / total << "%), ";
-	oss << "Parse " << std::chrono::duration_cast<std::chrono::seconds>(sParse) << "s (" << sParse.count() / total << "%), ";
-	oss << "Decode " << std::chrono::duration_cast<std::chrono::seconds>(sDecode) << "s (" << sDecode.count() / total << "%), ";
-	oss << "Copy " << std::chrono::duration_cast<std::chrono::seconds>(sCopy) << "s (" << sWrite.count() / total << "%)";
+	oss << "Read " << std::chrono::duration_cast<std::chrono::seconds>(sRead).count() << "s (" << sRead.count() / total << "%), ";
+	oss << "Parse " << std::chrono::duration_cast<std::chrono::seconds>(sParse).count() << "s (" << sParse.count() / total << "%), ";
+	oss << "Decode " << std::chrono::duration_cast<std::chrono::seconds>(sDecode).count() << "s (" << sDecode.count() / total << "%), ";
+	oss << "Copy " << std::chrono::duration_cast<std::chrono::seconds>(sWrite).count << "s (" << sWrite.count() / total << "%)";
 	cLog::get()->write(oss.str(), LOG_TYPE::L_INFO);
 	sRead = sParse = sDecode = sWrite = std::chrono::steady_clock::duration{};
 }
