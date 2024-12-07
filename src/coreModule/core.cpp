@@ -71,6 +71,7 @@
 #include "EntityCore/EntityCore.hpp"
 #include "coreModule/tully.hpp"
 #include "coreModule/volumObj3D.hpp"
+#include <filesystem>
 
 Core::Core(int width, int height, std::shared_ptr<Media> _media, std::shared_ptr<FontFactory> _fontFactory, const mBoost::callback<void, std::string>& recordCallback, std::shared_ptr<Observer> _observatory) :
 	skyTranslator(AppSettings::Instance()->getLanguageDir(), ""),
@@ -99,7 +100,11 @@ Core::Core(int width, int height, std::shared_ptr<Media> _media, std::shared_ptr
 	cloudNav = std::make_unique<CloudNavigator>();
 	universeCloudNav = std::make_unique<CloudNavigator>(AppSettings::Instance()->getConfigDir() + "gal3d.dat");
 	starGalaxy = std::make_unique<StarGalaxy>(AppSettings::Instance()->getConfigDir() + "gal3d.dat");
-	volumGalaxy = std::make_unique<VolumObj3D>("mw_rgb_d8.jpg", "mw_d32.png", true);
+	if (std::filesystem::exists(s_texture::getTexDir() + "milkyway-vguerin-d128.png")) {
+		volumGalaxy = std::make_unique<VolumObj3D>("milkyway-vguerin-d128.png", "", false);
+	} else {
+		volumGalaxy = std::make_unique<VolumObj3D>("mw_rgb_d8.jpg", "mw_d32.png", true);
+	}
 	dsoNav = std::make_unique<DsoNavigator>();
 	starLines = std::make_unique<StarLines>();
 	ojmMgr = std::make_unique<OjmMgr>();
@@ -395,9 +400,13 @@ void Core::init(const InitParser& conf)
 
 		ojmMgr->init();
 		// 3D object integration test
-		if (volumGalaxy->loaded())
-			volumGalaxy->setModel(Mat4f::translation(Vec3f( -0.002, 0.0001, -0.005)) * Mat4f::yawPitchRoll(112, 0, 0) * Mat4f::scaling(0.01), Vec3f(1, 1, 1/8.));
-		else
+		if (volumGalaxy->loaded()) {
+			if (std::filesystem::exists(s_texture::getTexDir() + "milkyway-vguerin-d128.png")) {
+				volumGalaxy->setModel(Mat4f::translation(Vec3f( -0.002, 0.0001, -0.005)) * Mat4f::yawPitchRoll(112, 0, 90) * Mat4f::scaling(0.01), Vec3f(1, 1, 1/8.));
+			} else {
+				volumGalaxy->setModel(Mat4f::translation(Vec3f( -0.002, 0.0001, -0.005)) * Mat4f::yawPitchRoll(112, 0, 0) * Mat4f::scaling(0.01), Vec3f(1, 1, 1/8.));
+			}
+		} else
 			ojmMgr->load("in_universe", "Milkyway", AppSettings::Instance()->getModel3DDir() + "Milkyway/Milkyway.ojm",AppSettings::Instance()->getModel3DDir()+"Milkyway/", Vec3f(0.0000001,0.0000001,0.0000001), 0.01);
 
 		// Load the pointer textures
