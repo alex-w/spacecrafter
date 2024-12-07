@@ -145,7 +145,7 @@ public:
 	static void setTexDir(const std::string& _texDir) {
 		s_texture::texDir = _texDir;
 	}
-	static void getTexDir() {
+	static const std::string& getTexDir() {
 		return texDir;
 	}
 
