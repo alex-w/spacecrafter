@@ -145,6 +145,9 @@ public:
 	static void setTexDir(const std::string& _texDir) {
 		s_texture::texDir = _texDir;
 	}
+	static void getTexDir() {
+		return texDir;
+	}
 
 	// Indicates if we must load the textures in low resolution or not.
 	static void setLoadInLowResolution(bool value, int _maxRes) {
