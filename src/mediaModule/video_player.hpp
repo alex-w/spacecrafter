@@ -46,7 +46,7 @@ class BufferMgr;
 class InitParser;
 
 // Maximal number of frames to load in advance (no longer need to be a power-of-two)
-#define MAX_CACHED_FRAMES 40
+#define MAX_CACHED_FRAMES 80
 // Minimal number of cached frames below which frames will be delivered with some latency
 #define CACHE_STRESS 16
 // Maximal number of cached frames over CACHE_STRESS after which the frame delivery stop accelerating
