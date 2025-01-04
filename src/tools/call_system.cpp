@@ -137,13 +137,18 @@ void CallSystem::checkUserSubDirectory(const std::string &CDIR, std::string& dir
             if (std::filesystem::create_directories(subDir)) {
                 out << "Successfully created home subdirectory " << entry.first << '\n';
                 if (entry.second) {
-                    std::error_code ec;
+                    std::error_code ec{};
                     std::filesystem::copy(std::string(CONFIG_DATA_DIR)+"data/"+entry.first, subDir, std::filesystem::copy_options::recursive, ec);
-                    if (ec) {
+                    if (ec || ec.message() == "Success") {
                         out << "Completed copy of " << entry.first << " in " << CDIR << '\n';
                     } else {
-                        std::cerr << "Failed to copy " << entry.first << " in " << CDIR << "\nAbort !\n";
-                        exit(-1);
+                        std::cerr << "Failed to copy " << entry.first << " in " << CDIR << " : " << ec.message() << std::endl;
+                        if (std::filesystem::exists(subDir)) {
+                            std::cout << "But it seems copied, let continue.\n";
+                        } else {
+                            std::cerr << "Abort !\n";
+                            exit(-1);
+                        }
                     }
                 }
             } else {
