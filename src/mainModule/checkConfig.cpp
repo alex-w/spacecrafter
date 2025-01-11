@@ -88,6 +88,7 @@ void CheckConfig::checkVideoSettings()
 	tmpSettings[SCK_FULLSCREEN]="true";
 	tmpSettings[SCK_REMOTE_DISPLAY]="false";
 	tmpSettings[SCK_KEEP_EMPTY_WINDOW]="true";
+	tmpSettings[SCK_FLAG_IMAGE_COMPRESSION_LOSS] = "true";
 	tmpSettings[SCK_SCREEN_W]="1024";
 	tmpSettings[SCK_SCREEN_H]="1024";
 	//tmpSettings[SCK_BBP_MODE]="24";
@@ -376,7 +377,6 @@ void CheckConfig::checkNavigationSettings()
 	tmpSettings[SCK_FLAG_NAVIGATION]="false";
 	tmpSettings[SCK_FLAG_ASTRONOMICAL]="false";
 	tmpSettings[SCK_FLAG_SKIP_PAUSE] = "false";
-	tmpSettings[SCK_FLAG_IMAGE_COMPRESSION_LOSS] = "true";
 	tmpSettings[SCK_PRESET_SKY_TIME]="2453065.333344907";
 	tmpSettings[SCK_AUTO_MOVE_DURATION]="5";
 	tmpSettings[SCK_DAY_KEY_MODE]="calendar";

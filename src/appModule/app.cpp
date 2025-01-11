@@ -132,6 +132,7 @@ App::App( SDLFacade* const sdl )
 	saveScreenInterface = std::make_shared<SaveScreenInterface>(VulkanMgr::instance->getScreenRect(), (sender) ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	saveScreenInterface->setVideoBaseName(settings->getVframeDirectory() + APP_LOWER_NAME);
 	saveScreenInterface->setSnapBaseName(settings->getScreenshotDirectory() + APP_LOWER_NAME);
+	saveScreenInterface->setImageCompressionLoss(conf.getBoolean(SCS_VIDEO, SCK_FLAG_IMAGE_COMPRESSION_LOSS));
 
 	screenFader =  std::make_unique<ScreenFader>();
 
