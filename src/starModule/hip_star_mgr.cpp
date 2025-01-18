@@ -1279,7 +1279,11 @@ void HipStarMgr::readFileVariableStar(TimeMgr* timeMgr)
 	std::ifstream fileIn(fileName);
 
 	if (!fileIn.is_open()) {
-		cLog::get()->write("VariableStar error opening "+fileName + " - Feature disabled", LOG_TYPE::L_ERROR);
+		static bool reported = false;
+		if (!reported) {
+			reported = true;
+			cLog::get()->write("VariableStar error opening "+fileName + " - Feature disabled", LOG_TYPE::L_ERROR);
+		}
 		return;
 	}
 
