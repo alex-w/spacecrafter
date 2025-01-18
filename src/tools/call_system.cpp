@@ -135,7 +135,6 @@ void CallSystem::checkUserSubDirectory(const std::string &CDIR, std::string& dir
         subDir = CDIR + entry.first;
         if (!std::filesystem::exists(subDir)) {
             std::filesystem::create_directories(subDir);
-            out << "Successfully created home subdirectory " << entry.first << '\n';
             if (entry.second) {
                 std::error_code ec{};
                 if (std::filesystem::exists(CONFIG_DATA_DIR+entry.first)) {
@@ -156,8 +155,7 @@ void CallSystem::checkUserSubDirectory(const std::string &CDIR, std::string& dir
                     }
                 }
             } else {
-                std::cerr << "Failed to create local home subdirectory " << entry.first << "\nAbort !\n";
-                exit(3);
+                out << "Successfully created home subdirectory " << entry.first << '\n';
             }
 		} else {
 			out << "Check " << entry.first << " subdirectory ok\n";
