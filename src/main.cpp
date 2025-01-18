@@ -305,13 +305,15 @@ int main(int argc, const char *argv[])
 	// create the main class for SC logical software
 	//-------------------------------------------
 	auto curMin = std::min(curW, curH);
+	auto renderSize = conf.getInt(SCS_VIDEO, SCK_RENDER_SIZE);
 	VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timelineSemaphore {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR, nullptr, VK_TRUE};
 	// For windowless usage (like NDI), don't create sdl window, sdl->getWindow() must then return nullptr.
 	VulkanMgrCreateInfo vkmgrInfo {.AppName=APP_LOWER_NAME, .appVersion=VK_MAKE_API_VERSION(0, GETV(0), GETV(3), GETV(6)),
 		.window=sdl->getWindow(), .vulkanVersion=VK_API_VERSION_1_1, .width=curMin, .height=-curMin, .queueRequest={2, 0, 0, 1, 1},
 		.requiredExtensions={"VK_KHR_timeline_semaphore"},
 		.redirectLog=cLog::writeECLog, .cachePath=ini->getUserDir()+"cache/", .logPath=appDir+"log/",
-		.swapchainUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, .chunkSize=256, .forceSwapchainCount=3,
+		.swapchainUsage = (renderSize <= 0) ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT : VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+		.chunkSize=256, .forceSwapchainCount=3,
 		.enableDebugLayers=conf.getBoolean(SCS_MAIN, SCK_DEBUG_LAYER), .drawLogs=conf.getBoolean(SCS_MAIN, SCK_DEBUG),
 		.saveLogs=conf.getBoolean(SCS_MAIN, SCK_LOG), .preserveCrashLogs = true,
 		.preferIntegrated=false, .allowOverrides=true, .customReleaseMemory=&s_texture::releaseUnusedMemory

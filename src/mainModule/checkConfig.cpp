@@ -89,6 +89,7 @@ void CheckConfig::checkVideoSettings()
 	tmpSettings[SCK_REMOTE_DISPLAY]="false";
 	tmpSettings[SCK_KEEP_EMPTY_WINDOW]="true";
 	tmpSettings[SCK_FLAG_IMAGE_COMPRESSION_LOSS] = "true";
+	tmpSettings[SCK_RENDER_SIZE]="0";
 	tmpSettings[SCK_SCREEN_W]="1024";
 	tmpSettings[SCK_SCREEN_H]="1024";
 	//tmpSettings[SCK_BBP_MODE]="24";

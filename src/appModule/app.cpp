@@ -101,6 +101,7 @@ App::App( SDLFacade* const sdl )
 	settings = AppSettings::Instance();
 	InitParser conf;
 	settings->loadAppSettings( &conf );
+	renderSize = std::max(conf.getInt(SCS_VIDEO, SCK_RENDER_SIZE), 0);
 	Texture::setTextureDir(settings->getTextureDir());
 	Pipeline::setShaderDir(settings->getShaderDir());
 	ComputePipeline::setShaderDir(settings->getShaderDir());
@@ -129,7 +130,11 @@ App::App( SDLFacade* const sdl )
 	fontFactory = std::make_unique<FontFactory>();
 
 	media = std::make_shared<Media>(conf);
-	saveScreenInterface = std::make_shared<SaveScreenInterface>(VulkanMgr::instance->getScreenRect(), (sender) ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	if (renderSize) {
+		saveScreenInterface = std::make_shared<SaveScreenInterface>(VkRect2D{0, 0, renderSize, renderSize}, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	} else {
+		saveScreenInterface = std::make_shared<SaveScreenInterface>(VulkanMgr::instance->getScreenRect(), (sender) ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	}
 	saveScreenInterface->setVideoBaseName(settings->getVframeDirectory() + APP_LOWER_NAME);
 	saveScreenInterface->setSnapBaseName(settings->getScreenshotDirectory() + APP_LOWER_NAME);
 	saveScreenInterface->setImageCompressionLoss(conf.getBoolean(SCS_VIDEO, SCK_FLAG_IMAGE_COMPRESSION_LOSS));
@@ -230,8 +235,12 @@ void App::initVulkan(InitParser &conf)
 	VulkanMgr &vkmgr = *VulkanMgr::instance;
 	cLog::get()->write("Initializing Vulkan...", LOG_TYPE::L_INFO);
 	sampleCount = static_cast<VkSampleCountFlagBits>(1 << static_cast<int>(std::log2(conf.getInt(SCS_RENDERING, SCK_ANTIALIASING)|1)));
-	width = vkmgr.getSwapChainExtent().width;
-	height = vkmgr.getSwapChainExtent().height;
+	if (renderSize) {
+		width = height = renderSize;
+	} else {
+		width = vkmgr.getSwapChainExtent().width;
+		height = vkmgr.getSwapChainExtent().height;
+	}
 	context.stagingMgr = std::make_unique<BufferMgr>(vkmgr, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 0, 512*1024*1024, "Staging BufferMgr");
 	context.uniformMgr = std::make_unique<BufferMgr>(vkmgr, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1*1024*1024, "uniform BufferMgr", true);
 	if (conf.getBoolean(SCS_MAIN, SCK_LOW_MEMORY))
@@ -376,8 +385,8 @@ void App::initVulkan(InitParser &conf)
 		constexpr int i = 0;
 		context.frame.push_back(std::make_unique<FrameMgr>(vkmgr, *context.render, 0, width, height, "main " + std::to_string(0), (void (*)(void *, int)) &App::submitFrame, (void *) this));
 		if (vkmgr.getSwapchainView().empty()) {
-			senderImage.push_back(std::make_unique<Texture>(vkmgr, width, height, VK_SAMPLE_COUNT_1_BIT, "main color " + std::to_string(0), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT));
-			context.frame.back()->bind(colorID, *senderImage.back());
+			offscreenImage.push_back(std::make_unique<Texture>(vkmgr, width, height, VK_SAMPLE_COUNT_1_BIT, "main color " + std::to_string(0), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT));
+			context.frame.back()->bind(colorID, *offscreenImage.back());
 		} else {
 			context.frame.back()->bind(colorID, vkmgr.getSwapchainView()[i]);
 		}
@@ -442,8 +451,8 @@ void App::finalizeInitVulkan(InitParser &conf)
 	for (uint8_t i = 1; i < 3; ++i) {
 		context.frame.push_back(std::make_unique<FrameMgr>(vkmgr, *context.render, i, width, height, "main " + std::to_string(i), (void (*)(void *, int)) &App::submitFrame, (void *) this));
 		if (vkmgr.getSwapchainView().empty()) {
-			senderImage.push_back(std::make_unique<Texture>(vkmgr, width, height, VK_SAMPLE_COUNT_1_BIT, "main color " + std::to_string(i), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT));
-			context.frame.back()->bind(colorID, *senderImage.back());
+			offscreenImage.push_back(std::make_unique<Texture>(vkmgr, width, height, VK_SAMPLE_COUNT_1_BIT, "main color " + std::to_string(i), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT));
+			context.frame.back()->bind(colorID, *offscreenImage.back());
 		} else {
 			context.frame.back()->bind(colorID, vkmgr.getSwapchainView()[i]);
 		}
@@ -458,8 +467,8 @@ void App::finalizeInitVulkan(InitParser &conf)
 	}
 	context.helper = std::make_unique<DrawHelper>();
 	context.helper->initShadow(context.shadowRes);
-	if (vkmgr.getSwapchainView().empty()) {
-		sender = std::make_unique<NDISender>(vkmgr, senderImage, context.fences.data());
+	if (vkmgr.getSwapchainView().empty() && renderSize == 0) {
+		sender = std::make_unique<NDISender>(vkmgr, offscreenImage, context.fences.data());
 	}
 	cLog::get()->write("Vulkan initialization completed", LOG_TYPE::L_INFO);
 }
@@ -962,14 +971,55 @@ void App::submitFrame(App *self, int id)
 		}
 		self->saveScreenInterface->update();
 		if (!self->flushFrames) {
-			if (self->sender) {
-				self->saveScreenInterface->readScreenShot(mainCmd, self->senderImage[id]->getImage());
+			self->saveScreenInterface->readScreenShot(
+				mainCmd,
+				(VulkanMgr::instance->getSwapchainView().empty()) ? self->offscreenImage[id]->getImage() : VulkanMgr::instance->getSwapchainImage()[id]
+			);
+			if (self->sender)
 				self->sender->setupReadback(mainCmd, id);
-			} else
-				self->saveScreenInterface->readScreenShot(mainCmd, VulkanMgr::instance->getSwapchainImage()[id]);
 		}
 	} else
 		self->context.waitFrameSync[0].semaphore = self->context.semaphores[self->context.lastFrameIdx];
+	if (self->renderSize) { // Extra step needed : blit
+		VkImageMemoryBarrier imageBarrier[2]{{
+			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			.pNext = nullptr,
+			.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+			.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			.image = self->offscreenImage[id]->getImage(),
+			.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1}
+		},{
+			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			.pNext = nullptr,
+			.srcAccessMask = 0,
+			.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+			.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			.image = VulkanMgr::instance->getSwapchainImage()[id],
+			.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1}
+		}};
+		vkCmdPipelineBarrier(mainCmd, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 2, imageBarrier);
+
+		VkImageBlit blit{
+			.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
+			.srcOffsets = {},
+			.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
+			.dstOffsets = {{}, {static_cast<int32_t>(VulkanMgr::instance->getSwapChainExtent().width), static_cast<int32_t>(VulkanMgr::instance->getSwapChainExtent().height), 1}},
+		};
+		self->offscreenImage[id]->getDimensions(blit.srcOffsets[1].x, blit.srcOffsets[1].y, blit.srcOffsets[1].z);
+		vkCmdBlitImage(mainCmd, self->offscreenImage[id]->getImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VulkanMgr::instance->getSwapchainImage()[id], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+		imageBarrier[1].srcAccessMask = imageBarrier[1].dstAccessMask;
+		imageBarrier[1].dstAccessMask = 0;
+		imageBarrier[1].oldLayout = imageBarrier[1].newLayout;
+		imageBarrier[1].newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		vkCmdPipelineBarrier(mainCmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, imageBarrier+1);
+	}
 	self->context.signalFrameSync[0].semaphore = self->context.semaphores[id + 3];
 	vkEndCommandBuffer(mainCmd);
 	self->context.waitFrameSync[1].value = self->context.signalFrameSync[1].value;
@@ -999,7 +1049,7 @@ void App::submitFrame(App *self, int id)
 			vkWaitForFences(VulkanMgr::instance->refDevice, 1, &self->context.fences[id], VK_TRUE, WAIT_TIME);
 			vkResetFences(VulkanMgr::instance->refDevice, 1, &self->context.fences[id]);
 			self->context.frame[id]->preBegin();
-			self->saveScreenInterface->readScreenShot(mainCmd, self->senderImage[id]->getImage());
+			self->saveScreenInterface->readScreenShot(mainCmd, self->offscreenImage[id]->getImage());
 			self->sender->setupReadback(mainCmd, id);
 			vkEndCommandBuffer(mainCmd);
 			VkSubmitInfo submit {VK_STRUCTURE_TYPE_SUBMIT_INFO, nullptr, 0, nullptr, nullptr, 1, &mainCmd, 0, nullptr};
