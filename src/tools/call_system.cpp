@@ -134,33 +134,34 @@ void CallSystem::checkUserSubDirectory(const std::string &CDIR, std::string& dir
 	for (auto &entry : listSubDirectory) {
         subDir = CDIR + entry.first;
         if (!std::filesystem::exists(subDir)) {
-            if (std::filesystem::create_directories(subDir)) {
-                out << "Successfully created home subdirectory " << entry.first << '\n';
-                if (entry.second) {
-                    std::error_code ec{};
-                    if (std::filesystem::exists(CONFIG_DATA_DIR)) {
-                        std::filesystem::copy(std::string(CONFIG_DATA_DIR)+entry.first, subDir, std::filesystem::copy_options::recursive, ec);
+            std::filesystem::create_directories(subDir);
+            out << "Successfully created home subdirectory " << entry.first << '\n';
+            if (entry.second) {
+                std::error_code ec{};
+                if (std::filesystem::exists(CONFIG_DATA_DIR+entry.first)) {
+                    std::filesystem::copy(std::string(CONFIG_DATA_DIR)+entry.first, subDir, std::filesystem::copy_options::recursive, ec);
+                } else {
+                    std::filesystem::copy(std::string(CONFIG_DATA_DIR)+"data/"+entry.first, subDir, std::filesystem::copy_options::recursive, ec);
+                }
+                if (ec || ec.message() == "Success") {
+                    out << "Completed copy of " << entry.first << " in " << CDIR << '\n';
+                } else {
+                    std::cerr << "Failed to copy " << entry.first << " in " << CDIR << " : " << ec.message() << std::endl;
+                    if (std::filesystem::is_empty(subDir)) {
+                        std::filesystem::remove(subDir);
+                        std::cerr << "Abort !\n";
+                        exit(-1);
                     } else {
-                        std::filesystem::copy(std::string(CONFIG_DATA_DIR)+"data/"+entry.first, subDir, std::filesystem::copy_options::recursive, ec);
-                    }
-                    if (ec || ec.message() == "Success") {
-                        out << "Completed copy of " << entry.first << " in " << CDIR << '\n';
-                    } else {
-                        std::cerr << "Failed to copy " << entry.first << " in " << CDIR << " : " << ec.message() << std::endl;
-                        if (std::filesystem::exists(subDir)) {
-                            std::cout << "But it seems copied, let continue.\n";
-                        } else {
-                            std::cerr << "Abort !\n";
-                            exit(-1);
-                        }
+                        out << "But it seems copied, let continue anyway.\n";
                     }
                 }
             } else {
                 std::cerr << "Failed to create local home subdirectory " << entry.first << "\nAbort !\n";
                 exit(3);
             }
-		} else
+		} else {
 			out << "Check " << entry.first << " subdirectory ok\n";
+        }
 	}
 
     dirResult += out.str();
