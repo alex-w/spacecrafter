@@ -232,6 +232,9 @@ private:
 	int PosDateTime;
 	int PosObjectInfo;
 	int PosMenuM;
+	double oldX=0;
+	double oldY=0;
+	double oldZ=0;
 
 	// Text UI
 	s_font* tuiFont = nullptr;		// The standard tui font - separate from gui so can reload on the fly
