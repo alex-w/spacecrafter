@@ -94,13 +94,11 @@ protected:
 	}
 	float getMag(const Navigator *nav) const {
 		int hip = s->getHip();
-		float mag = s->getMag();
 		if (hip != -1) {
-			float ratio = CoreLink::instance->checkRatio(hip, false);
-			if (ratio != -1)
-				mag = mag * ratio;
+			return CoreLink::instance->getMag(hip);
+		} else {
+			return 0.001f*a->mag_min + s->getMag()*(0.001f*a->mag_range)/a->mag_steps;
 		}
-		return 0.001f*a->mag_min + mag*(0.001f*a->mag_range)/a->mag_steps;
 	}
 	float getSelectPriority(const Navigator *nav) const {
 		return getMag(nav);

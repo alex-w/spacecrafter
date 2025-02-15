@@ -214,7 +214,9 @@ public:
 
 	float  starGetTwinkleAmount() const;
 
-	float checkRatio(int hip, bool realmag);
+	float getMag(int hip);
+
+	float getBaseMag(int hip);
 
 	////////////////////////////////////////////////////////////////////////////////
 	// StarNavigator---------------------------

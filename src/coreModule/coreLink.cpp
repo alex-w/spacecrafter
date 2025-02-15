@@ -673,8 +673,12 @@ float CoreLink::starGetTwinkleAmount() const {
 	return core->hip_stars->getTwinkleAmount();
 }
 
-float CoreLink::checkRatio(int hip, bool realMag) {
-	return core->hip_stars->checkRatio(hip, realMag);
+float CoreLink::getMag(int hip) {
+	return core->hip_stars->getMag(hip);
+}
+
+float CoreLink::getBaseMag(int hip) {
+	return core->hip_stars->getBaseMag(hip);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

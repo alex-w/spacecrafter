@@ -131,22 +131,29 @@ void IlluminateMgr::load(int num, const Vec3f& _color, double _size, double rota
 		hip_stars->hideStar(num);
 		remove(num);
 		return;
-	} else
+	} else {
 		hip_stars->showStar(num);
+		if (_size <= 1) {
+			remove(num);
+			return;
+		}
+	}
 	Object selected_object = hip_stars->searchHP(num).get();
 	//Vec3f color = selected_object.getRGB();
 	double ra, de;
 	selected_object.getRaDeValue(navigator,&ra,&de);
+	/*
 	if (_size > 0 && _size < 1) {
 		float mag = selected_object.getMag(navigator);
-		float magn = CoreLink::instance->checkRatio(num, true);
+		float magn = CoreLink::instance->getBaseMag(num);
 		if (magn != -1)
 			mag = magn;
-		hip_stars->addVariableStar(num, mag, _size);
+		hip_stars->addVariableStar(HipStarMgr::VariableStar{.hip=num, .magMax=mag*_size, .magMin=mag*_size});
 		return;
 	} else {
 		hip_stars->removeVariableStar(num);
 	}
+	*/
 	double size = _size;
 	//setup size
 	/*if (size<1.0) {
