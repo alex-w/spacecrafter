@@ -104,12 +104,14 @@ void AppCommandEval::define(const std::string& mArg, const std::string& mValue)
 		//~ printf("mValue = %s\n", mValue.c_str());
 		// std::cout << "This value of mValue is " << evalDouble(mValue) << std::endl;
 		//std::cout << "C_define : " <<  mArg.c_str() << " => " << evalDouble(mValue) << std::endl;
-		double v = evalDouble(mValue);
-		//if (v == trunc(v))
-		//	variables[mArg] = std::to_string(evalInt(mValue));
-		//else
-			variables[mArg] = std::to_string(v);
-	//	this->printVar();
+		auto p0 = mValue.find_first_not_of(" \t", 0, 2);
+		auto p1 = mValue.find('.', p0);
+		if (p1 != std::string::npos) {
+			p1 = mValue.find_last_not_of(" \t0.", std::string::npos, 4);
+		} else {
+			p1 = mValue.find_last_not_of(" \t", std::string::npos, 2);
+		}
+		variables[mArg] = mValue.substr(p0, ++p1-p0);
 	}
 }
 

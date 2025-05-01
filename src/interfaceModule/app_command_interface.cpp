@@ -3678,7 +3678,7 @@ int AppCommandInterface::commandCamera(uint64_t &wait)
 //
 // variable management
 //
-std::string AppCommandInterface::evalString (const std::string &var)
+std::string AppCommandInterface::evalString(const std::string &var)
 {
 	if (var.empty())
 		return "";
@@ -3686,7 +3686,7 @@ std::string AppCommandInterface::evalString (const std::string &var)
 }
 
 
-double AppCommandInterface::evalDouble (const std::string &var)
+double AppCommandInterface::evalDouble(const std::string &var)
 {
 	if (var.empty())
 		return 0.0;
@@ -3694,7 +3694,7 @@ double AppCommandInterface::evalDouble (const std::string &var)
 }
 
 
-int AppCommandInterface::evalInt (const std::string &var)
+int AppCommandInterface::evalInt(const std::string &var)
 {
 	if (var.empty())
 		return 0;
