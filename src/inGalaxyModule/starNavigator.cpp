@@ -14,6 +14,7 @@
 */
 
 #include <iostream>
+#include <algorithm>
 #include <sstream>
 #include <fstream>
 #include <cmath>
@@ -30,6 +31,7 @@
 #include "coreModule/projector.hpp"
 #include "navModule/navigator.hpp"
 #include "inGalaxyModule/Star3DWrapper.hpp"
+#include "starModule/hip_star_mgr.hpp"
 #include "coreModule/coreLink.hpp"
 
 #include "EntityCore/EntityCore.hpp"
@@ -629,6 +631,53 @@ void StarNavigator::draw(const Navigator * nav, const Projector* prj, bool scali
 		}
 	}
 	this->drawStarName(prj);
+}
+
+void StarNavigator::drawTraced(HipStarMgr& traceMgr, const Navigator *nav, const Projector *prj) noexcept
+{
+	std::vector<ScreenStarData> tracedStars;
+	if (!starsFader) {
+		traceMgr.drawScreenStars(tracedStars);
+		return;
+	}
+	tracedStars.reserve(std::min(listGlobalStarVisible.size(), static_cast<size_t>(NBR_MAX_STARS)));
+
+	for (const auto* star : listGlobalStarVisible) {
+		if (!star->show)
+			continue;
+
+		Vec3f position(-star->posXYZ[0], star->posXYZ[1], star->posXYZ[2]);
+		const float distance = (position - pos).length();
+		const float magnitude = star->mag + 5.f * (log10(distance) - 1.f);
+		if (magnitude >= magnitude_max)
+			continue;
+
+		int index = static_cast<int>((round(magnitude * 1000.f) / 1000.f + 4.f) / .05f);
+		index = std::clamp(index, 0, 255);
+		float radius = rc_mag_table[2 * index];
+		const float brightness = rc_mag_table[2 * index + 1];
+		if (brightness < .01f)
+			continue;
+
+		RangeMap<float> rmap(180, 1, -starSizeLimit, -(starSizeLimit + objectSizeLimit));
+		const float rolloff = -rmap.Map(fov);
+		radius = std::min(2.f * radius, rolloff);
+		if (radius < .2f)
+			continue;
+
+		Vec3d screen;
+		const Vec3f earthEqu = nav->helioToEarthPosEqu(
+			Mat4f::xrotation(-M_PI_2 - 23.4392803055555555556 * M_PI / 180) * position) * 1e-6;
+		if (!prj->projectEarthEqu(earthEqu, screen))
+			continue;
+
+		const Vec3f color = color_table[star->B_V] * brightness;
+		tracedStars.push_back({static_cast<float>(screen[0]), static_cast<float>(screen[1]),
+			color[0], color[1], color[2], radius});
+		if (tracedStars.size() == NBR_MAX_STARS)
+			break;
+	}
+	traceMgr.drawScreenStars(tracedStars);
 }
 
 void StarNavigator::drawRaw(const Mat4f &matrix) const noexcept

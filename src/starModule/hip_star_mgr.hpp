@@ -77,6 +77,13 @@ enum StarSync {
 	STAR_STORE // Left in VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL after use
 };
 
+// A projected star supplied by another catalogue, such as StarNavigator.
+struct ScreenStarData {
+	float x, y;
+	float r, g, b;
+	float magnitude;
+};
+
 class MagConverter {
 public:
 	MagConverter(const HipStarMgr &mgr) : mgr(mgr) {
@@ -172,6 +179,13 @@ public:
 
 	//! draw the stars and the star selection indicator if necessary
 	virtual double draw(GeodesicGrid* grid, ToneReproductor* eye, Projector* prj, TimeMgr* timeMgr, float altitude);
+
+	//! Draw already-projected stars through the same persistence framebuffer as
+	//! the Hipparcos catalogue, so the stars_trace flag behaves consistently.
+	void drawScreenStars(const std::vector<ScreenStarData>& stars);
+
+	//! Discard the accumulated star image; the next draw starts with a clear FBO.
+	void resetTrace();
 
 	//! compute the stars and the star selection indicator if necessary in buffer.
 	virtual double preDraw(GeodesicGrid* grid, ToneReproductor* eye, Projector* prj, Navigator* nav, TimeMgr* timeMgr, float altitude, bool atmosphere);
@@ -571,6 +585,7 @@ private:
 	std::unique_ptr<SyncEvent> syncReuse; // Wait used before redraw
 	int sizeTexFbo;
 	bool starTrace = false;
+	bool traceResetRequested = false;
 	unsigned char lastSync;
 	unsigned char nextSync;
 	unsigned char drawIdx = 0;

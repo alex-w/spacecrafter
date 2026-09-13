@@ -76,6 +76,14 @@ void StellarSystemModule::onEnter()
     core->currentStarNav->computePosition(center);
     // We should inject the starNav stars into the hip_star_mgr
     core->currentSsystemFactory->enterSystem();
+	// The star-trace framebuffer is shared with the solar-system sky. Its
+	// previous accumulation must not leak into the newly entered system.
+	core->currentHipStars->resetTrace();
+    // A stellar system owns a separate body collection. Re-apply the global
+    // trail state so its bodies immediately begin recording their paths.
+    const bool trailsEnabled = core->currentSsystemFactory->getFlag(BODY_FLAG::F_TRAIL);
+    core->currentSsystemFactory->setFlagTrails(trailsEnabled);
+    core->currentSsystemFactory->startTrails(trailsEnabled);
     core->setFlagTracking(false); // Just in case
     core->selectObject(core->currentSsystemFactory->getSelected());
 }
@@ -116,12 +124,14 @@ void StellarSystemModule::update(int delta_time)
         }
     }
 
-    core->currentStarNav->computePosition(center);
-
 	// Position of sun and all the satellites (ie planets)
 	core->currentSsystemFactory->computePositions(core->timeMgr->getJDay(), observer);
 
 	core->currentSsystemFactory->updateAnchorManager();
+	// Keep the nearby-star list in sync even when updates occur without a
+	// rendered frame (for example while the window is hidden).
+	center = core->navigation->getObserverHelioPos();
+	core->currentStarNav->computePosition(center);
 	// Transform matrices between coordinates systems
 	core->navigation->updateTransformMatrices(observer, core->timeMgr->getJDay());
 	// Direction of vision
@@ -194,7 +204,9 @@ void StellarSystemModule::draw(int delta_time)
 	core->currentIlluminates->draw(core->projection, core->navigation);
 	core->currentAsterisms->draw(core->projection, core->navigation);
 	core->currentStarLines->draw(core->navigation);
-    core->currentStarNav->draw(core->navigation, core->projection, true);
+	// StarNavigator uses the same persistence framebuffer as the normal sky
+	// stars, so stars_trace works in this mode too.
+    core->currentStarNav->drawTraced(*core->currentHipStars, core->navigation, core->projection);
 	core->currentSkyGridMgr->draw(core->projection, core->observatory.get());
 	core->currentSkyLineMgr->draw(core->projection, core->navigation, core->timeMgr.get(), core->observatory.get());
 	core->currentSkyDisplayMgr->draw(core->projection, core->navigation, core->selected_object.getEarthEquPos(core->navigation), core->old_selected_object.getEarthEquPos(core->navigation));

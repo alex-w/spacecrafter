@@ -74,9 +74,12 @@ void SolarSystemModule::onEnter()
 		observer->setAltitude(observer->getAltitude() *1.E6);
     thread = std::thread(&SolarSystemModule::asyncUpdateLoop, this);
     core->currentMilkyWay->enableZodiacal(true);
-    // Ensure we enter the solar system
+	// Ensure we enter the solar system
     core->currentSsystemFactory->switchToAnchor("Sun");
     core->currentSsystemFactory->enterSystem();
+	// The star-trace framebuffer is shared with stellar-system rendering.
+	// Clear its previous accumulation before drawing the solar-system sky.
+	core->currentHipStars->resetTrace();
     core->setFlagTracking(false); // Just in case
     core->selectObject(core->currentSsystemFactory->getSelected());
 }

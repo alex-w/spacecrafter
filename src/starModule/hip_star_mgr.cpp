@@ -867,27 +867,73 @@ double HipStarMgr::draw(GeodesicGrid* grid, ToneReproductor* eye, Projector* prj
 	return 0.;
 }
 
+void HipStarMgr::drawScreenStars(const std::vector<ScreenStarData>& stars)
+{
+	Context &context = *Context::instance;
+	const size_t count = std::min(stars.size(), static_cast<size_t>(NBR_MAX_STARS));
+	nbStarsToDraw[drawIdx] = static_cast<int>(count);
+	vertexData = static_cast<float *>(context.stagingMgr->getPtr(staging[drawIdx]));
+	for (size_t i = 0; i < count; ++i) {
+		const auto& star = stars[i];
+		*(vertexData++) = star.x;
+		*(vertexData++) = star.y;
+		*(vertexData++) = star.r;
+		*(vertexData++) = star.g;
+		*(vertexData++) = star.b;
+		*(vertexData++) = star.magnitude;
+	}
+
+	previousSync.emplace(starTrace ? STAR_STORE : STAR_CLEAR);
+	context.transfer->planCopyBetween(staging[drawIdx], vertexStars->get(), count * 6 * sizeof(float));
+	if (cmds[context.frameIdx] == -1) {
+		cmds[context.frameIdx] = context.frame[context.frameIdx]->create(1);
+		context.frame[context.frameIdx]->setName(cmds[context.frameIdx], "External stars draw FBO");
+	}
+	VkCommandBuffer cmd = context.frame[context.frameIdx]->begin(cmds[context.frameIdx], PASS_BACKGROUND);
+	m_pipelineFBO->bind(cmd);
+	m_layoutFBO->bindSet(cmd, *m_setFBO);
+	vertexFBO->bind(cmd);
+	vkCmdDraw(cmd, 4, 1, 0, 0);
+	context.frame[context.frameIdx]->compile(cmd);
+	context.frame[context.frameIdx]->toExecute(cmd, PASS_BACKGROUND);
+	context.starUsed[context.frameIdx] = this;
+	context.waitFrameSync[1].stageMask |= VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR;
+	context.signalFrameSync[1].stageMask |= VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR;
+	drawIdx = !drawIdx;
+}
+
+void HipStarMgr::resetTrace()
+{
+	traceResetRequested = true;
+}
+
 void HipStarMgr::updateFramebuffer(VkCommandBuffer cmd)
 {
 	previousSync.pop(lastSync);
 	previousSync.pop(nextSync);
-	switch (lastSync) {
-		case STAR_UNINITIALIZED:
-			renderPassClear->begin(0, cmd); // 0 is the index of the single FrameMgr created from this renderPass
-			pipelineStarsClear->bind(cmd);
-			break;
-		case STAR_CLEAR:
-			// syncClear->dstDependency(cmd);
-			// syncClear->resetDependency(cmd, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR);
-			renderPassClear->begin(0, cmd); // 0 is the index of the single FrameMgr created from this renderPass
-			pipelineStarsClear->bind(cmd);
-			break;
-		case STAR_STORE:
-			// syncReuse->dstDependency(cmd);
-			// syncReuse->resetDependency(cmd, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR);
-			renderPassReuse->begin(0, cmd); // 0 is the index of the single FrameMgr created from this renderPass
-			pipelineStarsReuse->bind(cmd);
-			break;
+	if (traceResetRequested) {
+		renderPassClear->begin(0, cmd);
+		pipelineStarsClear->bind(cmd);
+		traceResetRequested = false;
+	} else {
+		switch (lastSync) {
+			case STAR_UNINITIALIZED:
+				renderPassClear->begin(0, cmd); // 0 is the index of the single FrameMgr created from this renderPass
+				pipelineStarsClear->bind(cmd);
+				break;
+			case STAR_CLEAR:
+				// syncClear->dstDependency(cmd);
+				// syncClear->resetDependency(cmd, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR);
+				renderPassClear->begin(0, cmd); // 0 is the index of the single FrameMgr created from this renderPass
+				pipelineStarsClear->bind(cmd);
+				break;
+			case STAR_STORE:
+				// syncReuse->dstDependency(cmd);
+				// syncReuse->resetDependency(cmd, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR);
+				renderPassReuse->begin(0, cmd); // 0 is the index of the single FrameMgr created from this renderPass
+				pipelineStarsReuse->bind(cmd);
+				break;
+		}
 	}
 	m_layoutStars->bindSet(cmd, *m_setStars);
 	vertexStars->bind(cmd);

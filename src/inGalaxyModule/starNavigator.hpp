@@ -53,6 +53,7 @@ class Set;
 class s_texture;
 struct StarInfo;
 class StarManager;
+class HipStarMgr;
 
 typedef std::tuple<double, double, const std::string , const Vec4f > starDBtoDraw;
 
@@ -83,6 +84,8 @@ public:
 	 * \param prj (not used)
 	 */
 	void draw(const Navigator * nav, const Projector* prj, bool scaling) noexcept;
+	//! Draw through HipStarMgr's persistent framebuffer (stars_trace mode).
+	void drawTraced(HipStarMgr& traceMgr, const Navigator *nav, const Projector *prj) noexcept;
 	void drawRaw(const Mat4f &matrix) const noexcept;
 	/*! /fn
 	 * \brief calculates the stars to display from the structure
